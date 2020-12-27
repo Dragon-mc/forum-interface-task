@@ -20,7 +20,13 @@ if (!empty($_FILES)) {
     $params = $_FILES;
 }
 else if (empty($_GET)) {
-    $params = json_decode(array_keys($_POST)[0], true);
+    $params = json_decode(file_get_contents('php://input'), true);
+    if (empty($params)) {
+        $params = json_decode(array_keys($_POST)[0], true);
+        if (empty($params)) {
+            $params = $_POST;
+        }
+    }
 } else {
     $params = $_GET;
 }

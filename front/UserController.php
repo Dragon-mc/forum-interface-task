@@ -1,6 +1,6 @@
 <?php
 include './core/Controller.php';
-include './utils/Cache.php';
+//include './utils/Cache.php';
 
 class UserController extends Controller
 {
@@ -13,16 +13,19 @@ class UserController extends Controller
     // 用户注册
     public function register ($param) {
         // 打开缓存
-        $cache = new Cache(360, 'cache/');
+//        $cache = new Cache(360, 'cache/');
         // 从缓存中取出验证码
-        $vcode = $cache->get($param['token']);
+//        $vcode = $cache->get($param['token']);
+        session_start();
+        $vcode = $_SESSION[$param['token']];
 
         if (strtolower($vcode) != strtolower($param['vcode'])) {
-            return json_encode(array('code'=> 20001, 'message'=> '验证码错误!'));
+            return json_encode(array('code'=> 20001, 'message'=> $param)); // '验证码错误!'
         }
 
         // 释放存储验证的缓存文件
-        $cache->free($param['token']);
+//        $cache->free($param['token']);
+
         // 将账号密码存入数据库 对密码进行md5加密
         $param['password'] = md5($param['password']);
 
@@ -39,24 +42,25 @@ class UserController extends Controller
     // 用户登录
     public function login ($param) {
         // 打开缓存
-        $cache = new Cache(360, 'cache/');
+//        $cache = new Cache(360, 'cache/');
         // 从缓存中取出验证码
-        $vcode = $cache->get($param['token']);
+//        $vcode = $cache->get($param['token']);
+        session_start();
+        $vcode = $_SESSION[$param['token']];
         if (strtolower($vcode) != strtolower($param['vcode'])) {
             return json_encode(array('code'=> 20001, 'message'=> '验证码错误！'));
         }
         // 检验账号密码是否正确
         $pwd = md5($param['password']);
         try {
-            $res = $this->pdo->select("SELECT * FROM `tb_user` WHERE binary `username`='{$param['username']}' AND binary `password`='{$pwd}'");
+            $res = $this->pdo->find("SELECT * FROM `tb_user` WHERE binary `username`='{$param['username']}' AND binary `password`='{$pwd}'");
         } catch (Exception $e) {
             return json_encode(array('code'=> 20001, 'message'=> $e->getMessage()));
         }
 
         if ($res) {
             // 释放存储验证的缓存文件
-            $cache->free($param['token']);
-            $res = $res[0];
+//            $cache->free($param['token']);
             unset($res['password']);
             date_default_timezone_set("Asia/Shanghai");
             $this->pdo->update('tb_user', array('last_time'=> date("Y-m-d H:i:s")), "id={$res['id']}");
@@ -196,8 +200,10 @@ class UserController extends Controller
         imagedestroy($img);
 
         // 将验证字符串 存入到缓存中
-        $cache = new Cache(360, 'cache/');
-        $cache->put($this->token, $string);
+//        $cache = new Cache(360, 'cache/');
+//        $cache->put($this->token, $string);
+        session_start();
+        $_SESSION[$this->token] = $string;
 
         return json_encode(array('code'=> 20000, 'data'=> $image_data_base64));
     }
