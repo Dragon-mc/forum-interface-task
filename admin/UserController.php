@@ -6,7 +6,7 @@ class UserController extends Controller
 {
     public function login ($params) {
         // {"code":20000,"data":{"token":"admin-token"}}
-        $pwd = $params['password'];
+        $pwd = md5($params['password']);
         $res = $this->pdo->find("SELECT * FROM `tb_admin` WHERE binary `username`='{$params['username']}' AND binary `password`='{$pwd}'");
         if (sizeof($res) == 0) {
             return json_encode(array('code'=>20001, 'message'=> '登录失败，账号或密码错误'));
