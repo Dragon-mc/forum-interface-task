@@ -3,6 +3,7 @@
 class MyPDO
 {
     protected $pdo;
+    public $originPDO;
 
     public function __construct($config)
     {
@@ -13,6 +14,7 @@ class MyPDO
             } else {
                 $this->pdo = new PDO($dsn, $config['db_user'], $config['db_pwd']);
             }
+            $this->originPDO = $this->pdo;
         } catch (PDOException $e) {
             die ("Error!: " . $e->getMessage() . "<br/>");
         }
