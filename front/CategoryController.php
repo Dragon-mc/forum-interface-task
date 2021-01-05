@@ -11,14 +11,18 @@ class CategoryController extends Controller
             return $val['id'];
         }
         try {
+            $cate_info = array();
             if (isset($param['main_cate'])) {
                 // 处理获取主分类中所有帖子
                 $all_sub_cate_id= $this->pdo->select("SELECT id FROM `tb_sub_cate` WHERE main_id={$param['main_cate']}");
                 $sub_id_string = implode(", ", array_map("getId", $all_sub_cate_id));
+                if (empty($sub_id_string)) $sub_id_string = '-1';
                 $res = $this->pdo->select("SELECT `post`.*, `user`.nickname, `user`.username, `user`.avatar FROM `tb_post` as `post`, `tb_user` as `user` WHERE `post`.sub_id in({$sub_id_string}) AND `post`.user_id=`user`.id AND `post`.status=1 LIMIT {$skip}, {$limit}");
+                $cate_info = $this->pdo->find("SELECT `name`, `desc` FROM `tb_main_cate` WHERE id={$param['main_cate']}");
             } elseif (isset($param['sub_cate'])) {
                 // 处理获取次分类中所有帖子
                 $res = $this->pdo->select("SELECT `post`.*, `user`.nickname, `user`.username, `user`.avatar FROM `tb_post` as `post`, `tb_user` as `user` WHERE `post`.sub_id={$param['sub_cate']} AND `post`.user_id=`user`.id AND `post`.status=1 LIMIT {$skip}, {$limit}");
+                $cate_info = $this->pdo->find("SELECT `name`, `desc` FROM `tb_sub_cate` WHERE id={$param['sub_cate']}");
             } else {
                 // 当没有指定分类时
                 $res = $this->pdo->select("SELECT `post`.*, `user`.nickname, `user`.username, `user`.avatar FROM `tb_post` as `post`, `tb_user` as `user` WHERE `post`.user_id=`user`.id AND `post`.status=1 LIMIT {$skip}, {$limit}");
@@ -33,7 +37,7 @@ class CategoryController extends Controller
         } catch (Exception $e) {
             return json_encode(array('code'=> 20001, 'message'=> $e->getMessage()));
         }
-        return json_encode(array('code'=> 20000, 'data'=> $res));
+        return json_encode(array('code'=> 20000, 'data'=> array('post'=> $res, 'cate'=> $cate_info)));
     }
 
     // 获取分类页面所有分类

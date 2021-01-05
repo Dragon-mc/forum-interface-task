@@ -7,7 +7,7 @@ class IndexController extends Controller
         $limit = $param['limit'];
         $skip = $param['skip'];
         try {
-            $res = $this->pdo->select("SELECT `post`.*, `user`.nickname, `user`.username, `user`.avatar FROM `tb_post` as `post`, `tb_user` as `user` WHERE `post`.user_id=`user`.id AND `post`.status=1 LIMIT {$skip}, {$limit}");
+            $res = $this->pdo->select("SELECT `post`.*, `user`.nickname, `user`.username, `user`.avatar FROM `tb_post` as `post`, `tb_user` as `user` WHERE `post`.user_id=`user`.id AND `post`.status=1 ORDER BY `post`.time DESC LIMIT {$skip}, {$limit}");
             foreach ($res as $key=>$val) {
                 // 获取帖子被评论次数
                 $res[$key]['comment_times'] = $this->pdo->count('tb_comment', "post_id={$val['id']}");
@@ -23,11 +23,12 @@ class IndexController extends Controller
     public function fetchRankList () {
         $res = array();
         try {
-            $browse_desc = $this->pdo->select("SELECT post_id, count(id) as `read_times` FROM `tb_history` GROUP BY post_id ORDER BY `read_times` DESC LIMIT 5");
+            $browse_desc = $this->pdo->select("SELECT post_id, count(id) as `read_times` FROM `tb_history` GROUP BY post_id ORDER BY `read_times` DESC LIMIT 10");
             $browse_rank = array();
             foreach ($browse_desc as $key=>$val) {
                 // 获取每条浏览排行中 帖子信息 和 用户头像
-                $browse_rank[$key] = $this->pdo->find("SELECT `post`.title, `user`.avatar, `post`.id FROM `tb_post` as `post`, `tb_user` as `user` WHERE `post`.id={$val['post_id']} AND `post`.user_id=`user`.id");
+                $browse_rank[$key] = $this->pdo->find("SELECT `post`.title, `post`.status, `user`.avatar, `post`.id FROM `tb_post` as `post`, `tb_user` as `user` WHERE `post`.id={$val['post_id']} AND `post`.user_id=`user`.id");
+                if ($browse_rank[$key]['status'] == 2) unset($browse_rank[$key]);
             }
             $comment_rank = $this->pdo->select("SELECT post_id, count(id) as `commented_times` FROM `tb_comment` GROUP BY post_id ORDER BY `commented_times` DESC LIMIT 5");
             foreach ($comment_rank as $key=>$val) {
@@ -64,7 +65,8 @@ class IndexController extends Controller
             $browse_desc = $this->pdo->select("SELECT post_id, count(id) as `read_times` FROM `tb_history` GROUP BY post_id ORDER BY `read_times` DESC LIMIT {$skip}, {$limit}");
             foreach ($browse_desc as $key=>$val) {
                 // 获取每条浏览排行中 帖子信息 和 用户头像
-                $browse_desc[$key] = array_merge($browse_desc[$key], $this->pdo->find("SELECT `post`.title, `user`.avatar, `user`.nickname, `user`.username, `user`.id as `user_id` FROM `tb_post` as `post`, `tb_user` as `user` WHERE `post`.id={$val['post_id']} AND `post`.user_id=`user`.id"));
+                $browse_desc[$key] = array_merge($browse_desc[$key], $this->pdo->find("SELECT `post`.title, `post`.status, `user`.avatar, `user`.nickname, `user`.username, `user`.id as `user_id` FROM `tb_post` as `post`, `tb_user` as `user` WHERE `post`.id={$val['post_id']} AND `post`.user_id=`user`.id"));
+                if ((int)$browse_desc[$key]['status'] === 2) unset($browse_desc[$key]);
             }
         } catch (Exception $e) {
             return json_encode(array('code'=> 20001, 'message'=> $e->getMessage()));

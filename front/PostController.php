@@ -73,7 +73,8 @@ class PostController extends Controller
     public function deletePost ($param) {
         $post_id = $param['post_id'];
         try {
-            $this->delete('tb_post', "id={$post_id}");
+//            $this->pdo->delete('tb_post', "id={$post_id}");
+            $this->pdo->update('tb_post', array('status'=> 2), "id={$post_id}");
         } catch (Exception $e) {
             return json_encode(array('code'=> 20001, 'message'=> '回复失败'));
         }
@@ -93,7 +94,7 @@ class PostController extends Controller
         try {
             $this->pdo->insert('tb_post', $param, true);
         } catch (Exception $e) {
-            return json_encode(array('code'=> 20001, 'message'=> '发布帖子失败'));
+            return json_encode(array('code'=> 20001, 'message'=> $e->getMessage()));
         }
         return json_encode(array('code'=> 20000));
     }

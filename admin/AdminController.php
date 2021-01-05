@@ -3,6 +3,7 @@ include './core/Controller.php';
 
 class AdminController extends Controller
 {
+    // 获取管理员列表
     public function lists ($param) {
         $order = $param['sort'] == '+id' ? 'ASC' : 'DESC';
         $page = $param['page'];
@@ -28,6 +29,7 @@ class AdminController extends Controller
         return json_encode($returnData);
     }
 
+    // 添加管理员
     public function create ($param) {
         $param['password'] = md5($param['password']);
         try {
@@ -39,6 +41,7 @@ class AdminController extends Controller
         return json_encode($returnData);
     }
 
+    // 编辑管理员
     public function update ($param) {
         $id = $param['id'];
         try {
@@ -49,6 +52,7 @@ class AdminController extends Controller
         return json_encode(array('code'=> 20000));
     }
 
+    // 删除管理员
     public function delete ($param) {
         $id = $param['id'];
         try {

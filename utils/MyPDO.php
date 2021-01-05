@@ -7,7 +7,7 @@ class MyPDO
     public function __construct($config)
     {
         try {
-            $dsn = "mysql:host={$config['db_host']};dbname={$config['db_name']}";
+            $dsn = "{$config['db_type']}:host={$config['db_host']};dbname={$config['db_name']};charset={$config['charset']}";
             if ($config['is_persistent']) {
                 $this->pdo = new PDO($dsn, $config['db_user'], $config['db_pwd'], array(PDO::ATTR_PERSISTENT => true));
             } else {
@@ -35,10 +35,17 @@ class MyPDO
     public function insert ($table, $arrayDataValue, $allowFields = false) {
         if ($allowFields)
             $this->fieldsFilter($table, $arrayDataValue);
-        $strSql = "INSERT INTO `$table` (`".implode('`,`', array_keys($arrayDataValue))."`) VALUES ('".implode("','", $arrayDataValue)."')";
-        $res = $this->pdo->query($strSql);
+//        $strSql = "INSERT INTO `$table` (`".implode('`,`', array_keys($arrayDataValue))."`) VALUES (':".implode("',':", array_keys($arrayDataValue))."')"; // implode("',':", $arrayDataValue)
+        // $res = $this->pdo->query($strSql);
+        $strSql = "INSERT INTO `$table` (`".implode('`,`', array_keys($arrayDataValue))."`) VALUES (:".implode(",:", array_keys($arrayDataValue)).")";
+        $statement = $this->pdo->prepare($strSql);
+        $values = array();
+        foreach ($arrayDataValue as $key => $val) {
+            $values[':'.$key] = $val;
+        }
+        $statement->execute($values);
         $this->getPDOError();
-        return $res->rowCount();
+        return $statement->rowCount();
     }
 
     /**
@@ -56,16 +63,25 @@ class MyPDO
         if ($where) {
             $strSql = '';
             foreach ($arrayDataValue as $key => $value) {
-                $strSql .= ", `$key`='$value'";
+//                $strSql .= ", `$key`='$value'";
+                $strSql .= ", `$key`=:$key";
             }
             $strSql = substr($strSql, 1);
             $strSql = "UPDATE `$table` SET $strSql WHERE $where";
         } else {
-            $strSql = "REPLACE INTO `$table` (`".implode('`,`', array_keys($arrayDataValue))."`) VALUES ('".implode("','", $arrayDataValue)."')";
+//            $strSql = "REPLACE INTO `$table` (`".implode('`,`', array_keys($arrayDataValue))."`) VALUES ('".implode("','", $arrayDataValue)."')";
+            $strSql = "REPLACE INTO `$table` (`".implode('`,`', array_keys($arrayDataValue))."`) VALUES (:".implode(',:', array_keys($arrayDataValue)).")";
         }
-        $result = $this->pdo->query($strSql);
+
+//        $result = $this->pdo->query($strSql);
+        $statement = $this->pdo->prepare($strSql);
+        $values = array();
+        foreach ($arrayDataValue as $key => $val) {
+            $values[':'.$key] = $val;
+        }
+        $statement->execute($values);
         $this->getPDOError();
-        return $result->rowCount();
+        return $statement->rowCount();
     }
 
     /**

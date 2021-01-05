@@ -1,6 +1,9 @@
 <?php
 $database = array(
 
+    // 数据库类型
+    'db_type'           =>      'mysql',
+
     // 数据库主机地址
     'db_host'           =>      'localhost',
 
@@ -12,6 +15,9 @@ $database = array(
 
     // 数据库名
     'db_name'           =>      'db_forum',
+
+    // 字符集
+    'charset'           =>      'utf8',
 
     // 是否持久连接数据库
     'is_persistent'     =>      false
