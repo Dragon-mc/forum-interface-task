@@ -3,6 +3,7 @@ include './core/Controller.php';
 
 class IndexController extends Controller
 {
+    // 获取首页推荐列表信息
     public function fetchRecommendPostList ($param) {
         $limit = $param['limit'];
         $skip = $param['skip'];
@@ -20,6 +21,19 @@ class IndexController extends Controller
         return json_encode(array('code'=> 20000, 'data'=> $res));
     }
 
+    // 获取轮播图列表
+    public function fetchCarouselList () {
+        // 随机抽取5个拥有图片数据的帖子
+        try {
+            $sql = "SELECT * FROM tb_post WHERE `content` LIKE '%<img%src=%>' ORDER BY rand() LIMIT 5";
+            $res = $this->pdo->select($sql);
+        } catch (Exception $e) {
+            return json_encode(array('code'=> 20001, 'message'=> $e->getMessage()));
+        }
+        return json_encode(array('code'=> 20000, 'data'=> $res));
+    }
+
+    // 获取首页首页排行榜列表
     public function fetchRankList () {
         $res = array();
         try {
@@ -30,12 +44,12 @@ class IndexController extends Controller
                 $browse_rank[$key] = $this->pdo->find("SELECT `post`.title, `post`.status, `user`.avatar, `post`.id FROM `tb_post` as `post`, `tb_user` as `user` WHERE `post`.id={$val['post_id']} AND `post`.user_id=`user`.id");
                 if ($browse_rank[$key]['status'] == 2) unset($browse_rank[$key]);
             }
-            $comment_rank = $this->pdo->select("SELECT post_id, count(id) as `commented_times` FROM `tb_comment` GROUP BY post_id ORDER BY `commented_times` DESC LIMIT 5");
+            $comment_rank = $this->pdo->select("SELECT post_id, count(id) as `commented_times` FROM `tb_comment` GROUP BY post_id ORDER BY `commented_times` DESC LIMIT 10");
             foreach ($comment_rank as $key=>$val) {
                // 获取每个帖子的详情 和 用户信息
                 $comment_rank[$key]['details'] = $this->pdo->find("SELECT `user`.nickname, `user`.username, `user`.avatar, `user`.sign, `post`.title FROM `tb_post` as `post`, `tb_user` as `user` WHERE `post`.id={$val['post_id']} AND `post`.user_id=`user`.id");
             }
-            $attention_rank = $this->pdo->select("SELECT passive_id, count(*) as `passive_attention_num` FROM `tb_user_relation` GROUP BY passive_id ORDER BY `passive_attention_num` DESC LIMIT 5");
+            $attention_rank = $this->pdo->select("SELECT passive_id, count(*) as `passive_attention_num` FROM `tb_user_relation` GROUP BY passive_id ORDER BY `passive_attention_num` DESC LIMIT 10");
             foreach ($attention_rank as $key=>$val) {
                 $attention_rank[$key]['user_info'] = $this->pdo->find("SELECT nickname, username, avatar FROM `tb_user` WHERE id={$val['passive_id']}");
             }
@@ -48,6 +62,7 @@ class IndexController extends Controller
         return json_encode(array('code'=> 20000, 'data'=> $res));
     }
 
+    // 获取分类列表
     public function fetchCateList () {
         try {
             $res = $this->pdo->select("SELECT id, name FROM `tb_main_cate`");
@@ -58,6 +73,7 @@ class IndexController extends Controller
         return json_encode(array('code'=> 20000, 'data'=> $res));
     }
 
+    // 获取浏览排行列表
     public function fetchBrowseRank ($param) {
         $limit = $param['limit'];
         $skip = $param['skip'];
@@ -75,6 +91,7 @@ class IndexController extends Controller
         return json_encode(array('code'=> 20000, 'data'=> $browse_desc));
     }
 
+    // 获取评论排行列表
     public function fetchCommentRank ($param) {
         $limit = $param['limit'];
         $skip = $param['skip'];
@@ -92,6 +109,7 @@ class IndexController extends Controller
         return json_encode(array('code'=> 20000, 'data'=> $comment_rank));
     }
 
+    // 获取关注排行列表
     public function fetchAttentionRank ($param) {
         $visit_id = $param['visit_id'];
         $limit = $param['limit'];

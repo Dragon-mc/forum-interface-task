@@ -20,7 +20,7 @@ class UserController extends Controller
         $vcode = $_SESSION[$param['token']];
 
         if (strtolower($vcode) != strtolower($param['vcode'])) {
-            return json_encode(array('code'=> 20001, 'message'=> $param)); // '验证码错误!'
+            return json_encode(array('code'=> 20001, 'message'=> '验证码错误！')); // '验证码错误!'
         }
 
         // 释放存储验证的缓存文件
