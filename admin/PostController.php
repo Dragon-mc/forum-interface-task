@@ -12,7 +12,7 @@ class PostController extends Controller
         $where .= !!$param['sub_id'] ? " AND post.sub_id={$param['sub_id']}" : '';
         $where .= !!$param['content'] ? " AND post.content LIKE '%{$param['content']}%'" : '';
         $total = $this->pdo->count('tb_post');
-        $sql = "SELECT post.*, user.username as user_name, sub.name as sub_name FROM `tb_post` as `post`, `tb_sub_cate` as `sub`, `tb_user` as `user` WHERE post.user_id=user.id AND post.sub_id=sub.id {$where} ORDER BY `id` {$order} LIMIT {$start}, {$limit}";
+        $sql = "SELECT post.*, user.username as user_name, sub.name as sub_name FROM `tb_post` as `post`, `tb_sub_cate` as `sub`, `tb_user` as `user` WHERE post.user_id=user.id AND post.sub_id=sub.id {$where} AND post.status<2 ORDER BY `id` {$order} LIMIT {$start}, {$limit}";
         // 获取语句异常，并返回错误的信息
         try {
             $data = $this->pdo->select($sql);
@@ -62,9 +62,10 @@ class PostController extends Controller
     }
 
     public function delete ($param) {
-        $id = $param['id'];
+        $post_id = $param['id'];
         try {
-            $this->pdo->delete('tb_post', "id={$id}");
+            // $this->pdo->delete('tb_post', "id={$post_id}");
+            $this->pdo->update('tb_post', array('status'=> 2), "id={$post_id}");
         } catch (Exception $e) {
             return json_encode(array('code'=> 20001, 'message'=> $e->getMessage()));
         }
