@@ -30,7 +30,14 @@ class UserCenterController extends Controller
         $skip = ($page - 1) * $limit;
         try {
             $total = $this->pdo->count('tb_collection', "user_id={$id}");
-            $res = $this->pdo->select("SELECT `us`.username, `us`.nickname, `us`.avatar, `us`.id as user_id, `po`.*, `col`.time as collection_time FROM `tb_collection` as `col`, `tb_user` as `us`, `tb_post` as `po`  WHERE `col`.user_id={$id} AND `po`.user_id=`us`.id AND `col`.post_id=`po`.id ORDER BY `col`.time DESC LIMIT {$skip}, {$limit}");
+            $sql = "SELECT `us`.username, `us`.nickname, `us`.avatar, `us`.id as user_id, `po`.*, `col`.time as collection_time
+                    FROM `tb_collection` as `col`
+                    JOIN `tb_user` as `us` ON `po`.user_id=`us`.id
+                    JOIN `tb_post` as `po` ON `col`.post_id=`po`.id
+                    WHERE `col`.user_id={$id}
+                    ORDER BY `col`.time DESC
+                    LIMIT {$skip}, {$limit}";
+            $res = $this->pdo->select($sql);
             foreach ($res as $key=>$val) {
                 // 获取帖子被评论次数
                 $res[$key]['comment_times'] = $this->pdo->count('tb_comment', "post_id={$val['id']}");
@@ -93,7 +100,13 @@ class UserCenterController extends Controller
         $skip = ($page - 1) * $limit;
         try {
             $total = $this->pdo->count('tb_user_relation', "active_id={$id}");
-            $res = $this->pdo->select("SELECT `user`.* FROM `tb_user_relation` as `ur`, `tb_user` as `user` WHERE `ur`.active_id={$id} AND `ur`.passive_id=`user`.id ORDER BY `ur`.time DESC LIMIT {$skip}, {$limit}");
+            $sql = "SELECT `user`.*
+                    FROM `tb_user_relation` as `ur`
+                    JOIN `tb_user` as `user` ON `ur`.passive_id=`user`.id
+                    WHERE `ur`.active_id={$id}
+                    ORDER BY `ur`.time DESC
+                    LIMIT {$skip}, {$limit}";
+            $res = $this->pdo->select($sql);
             foreach ($res as $key=>$val) {
                 $res[$key]['is_attention'] = $this->pdo->count('tb_user_relation', "active_id={$visit_id} AND passive_id={$val['id']}")?true:false;
             }
@@ -113,7 +126,13 @@ class UserCenterController extends Controller
         $skip = ($page - 1) * $limit;
         try {
             $total = $this->pdo->count('tb_user_relation', "passive_id={$id}");
-            $res = $this->pdo->select("SELECT `user`.* FROM `tb_user_relation` as `ur`, `tb_user` as `user` WHERE `ur`.passive_id={$id} AND `ur`.active_id=`user`.id ORDER BY `ur`.time DESC LIMIT {$skip}, {$limit}");
+            $sql = "SELECT `user`.*
+                    FROM `tb_user_relation` as `ur`
+                    JOIN `tb_user` as `user` ON `ur`.active_id=`user`.id
+                    WHERE `ur`.passive_id={$id}
+                    ORDER BY `ur`.time DESC
+                    LIMIT {$skip}, {$limit}";
+            $res = $this->pdo->select($sql);
             foreach ($res as $key=>$val) {
                 $res[$key]['is_attention'] = $this->pdo->count('tb_user_relation', "active_id={$visit_id} AND passive_id={$val['id']}")?true:false;
             }
@@ -132,7 +151,14 @@ class UserCenterController extends Controller
         $skip = ($page - 1) * $limit;
         try {
             $total = $this->pdo->count('tb_history', "user_id={$id}");
-            $res = $this->pdo->select("SELECT `us`.username, `us`.nickname, `us`.avatar, `us`.id as user_id, `po`.*, `his`.time as history_time FROM `tb_history` as `his`, `tb_user` as `us`, `tb_post` as `po`  WHERE `his`.user_id={$id} AND `po`.user_id=`us`.id AND `his`.post_id=`po`.id ORDER BY `his`.time DESC LIMIT {$skip}, {$limit}");
+            $sql = "SELECT `us`.username, `us`.nickname, `us`.avatar, `us`.id as user_id, `po`.*, `his`.time as history_time
+                    FROM `tb_history` as `his`
+                    JOIN `tb_user` as `us` ON `po`.user_id=`us`.id
+                    JOIN `tb_post` as `po` ON `his`.post_id=`po`.id
+                    WHERE `his`.user_id={$id}
+                    ORDER BY `his`.time DESC
+                    LIMIT {$skip}, {$limit}";
+            $res = $this->pdo->select($sql);
             foreach ($res as $key=>$val) {
                 // 获取帖子被评论次数
                 $res[$key]['comment_times'] = $this->pdo->count('tb_comment', "post_id={$val['id']}");

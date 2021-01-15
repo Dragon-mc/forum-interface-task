@@ -3,6 +3,7 @@ include './core/Controller.php';
 
 class UserlistController extends Controller
 {
+    // 获取用户列表
     public function lists ($param) {
         $order = $param['sort'] == '+id' ? 'ASC' : 'DESC';
         $page = $param['page'];
@@ -12,7 +13,10 @@ class UserlistController extends Controller
         $where .= !!$param['nickname'] ? " AND nickname LIKE '%{$param['nickname']}%'" : '';
         $where .= !!$param['sex'] ? " AND sex='{$param['sex']}'" : '';
         $total = $this->pdo->count('tb_user');
-        $sql = "SELECT id, username, nickname, sex, sign, introduction, create_time, last_time FROM `tb_user` {$where} ORDER BY `id` {$order} LIMIT {$start}, {$limit}";
+        $sql = "SELECT id, username, nickname, sex, sign, introduction, create_time, last_time
+                FROM `tb_user`
+                {$where}
+                ORDER BY `id` {$order} LIMIT {$start}, {$limit}";
         // 获取语句异常，并返回错误的信息
         try {
             $data = $this->pdo->select($sql);
@@ -29,6 +33,7 @@ class UserlistController extends Controller
         return json_encode($returnData);
     }
 
+    // 添加用户
     public function create ($param) {
         try {
             $this->pdo->insert('tb_user', $param);
@@ -39,6 +44,7 @@ class UserlistController extends Controller
         return json_encode($returnData);
     }
 
+    // 编辑用户
     public function update ($param) {
         $id = $param['id'];
         try {
@@ -49,6 +55,7 @@ class UserlistController extends Controller
         return json_encode(array('code'=> 20000));
     }
 
+    // 删除用户
     public function delete ($param) {
         $id = $param['id'];
         try {

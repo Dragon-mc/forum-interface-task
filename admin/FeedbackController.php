@@ -3,14 +3,19 @@ include './core/Controller.php';
 
 class FeedbackController extends Controller
 {
+    // 获取反馈列表
     public function lists ($param) {
         $order = $param['sort'] == '+id' ? 'ASC' : 'DESC';
         $page = $param['page'];
         $limit = $param['limit'];
         $start = ($page - 1) * $limit;
-        $where = !!$param['content'] ? " AND fb.content LIKE '%{$param['content']}%'" : '';
+        $where = !!$param['content'] ? "WHERE fb.content LIKE '%{$param['content']}%'" : '';
         $has_reply = $param['has_reply'];
-        $sql = "SELECT fb.*, user.username FROM `tb_feedback` as fb, `tb_user` as `user` WHERE fb.user_id=user.id {$where} ORDER BY `id` {$order} LIMIT {$start}, {$limit}";
+        $sql = "SELECT fb.*, user.username
+                FROM `tb_feedback` as fb
+                JOIN `tb_user` as `user` ON fb.user_id=user.id
+                {$where}
+                ORDER BY `id` {$order} LIMIT {$start}, {$limit}";
         // 获取语句异常，并返回错误的信息
         try {
             $data = $this->pdo->select($sql);
@@ -20,7 +25,11 @@ class FeedbackController extends Controller
         // 遍历查询结果，查找出反馈的所有回复
         foreach ($data as $key=>$val) {
             try {
-                $data[$key]['reply_data'] = $this->pdo->select("SELECT ar.*, admin.username as admin_name FROM `tb_admin_reply` as ar, `tb_admin` as admin WHERE feedback_id={$val['id']} AND ar.admin_id=admin.id");
+                $sql = "SELECT ar.*, admin.username as admin_name
+                        FROM `tb_admin_reply` as ar
+                        JOIN `tb_admin` as admin ON ar.admin_id=admin.id
+                        WHERE feedback_id={$val['id']}";
+                $data[$key]['reply_data'] = $this->pdo->select($sql);
             } catch (Exception $e) {
                 return json_encode(array('code'=> 20001, 'message'=> $e->getMessage()));
             }
@@ -50,6 +59,7 @@ class FeedbackController extends Controller
         return json_encode($returnData);
     }
 
+    // 回复用户反馈
     public function replyUser ($param) {
         try {
             $this->pdo->insert('tb_admin_reply', $param);
@@ -60,6 +70,7 @@ class FeedbackController extends Controller
         return json_encode($returnData);
     }
 
+    // 删除反馈
     public function delete ($param) {
         $id = $param['id'];
         try {

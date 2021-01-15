@@ -4,13 +4,18 @@ include './utils/Uploader.php';
 
 class PostController extends Controller
 {
+    // 获取帖子信息
     public function fetchPostInfo ($param) {
         // 帖子id
         $id = $param['id'];
         // 参观者id，即当前访问的用户
         $visit_id = $param['visit_id'];
         try {
-            $res = $this->pdo->find("SELECT `po`.*, `sc`.name as cate_name FROM `tb_post` as `po`, `tb_sub_cate` as `sc` WHERE `po`.id={$id} AND `po`.sub_id=`sc`.id");
+            $sql = "SELECT `po`.*, `sc`.name as cate_name
+                    FROM `tb_post` as `po`
+                    JOIN `tb_sub_cate` as `sc` ON `po`.sub_id=`sc`.id
+                    WHERE `po`.id={$id}";
+            $res = $this->pdo->find($sql);
             $res['comment_times'] = $this->pdo->count('tb_comment', "post_id={$res['id']}");
             $res['read_times'] = $this->pdo->count('tb_history', "post_id={$res['id']}");
             $res['collection_times'] = $this->pdo->count('tb_collection', "post_id={$res['id']}");
@@ -22,9 +27,20 @@ class PostController extends Controller
             $res['user_info']['collection_num'] = $this->pdo->find("SELECT count(*) as NUM FROM `tb_collection` WHERE `user_id`={$res['user_id']}")['NUM'];
             $res['user_info']['is_attention'] = $this->pdo->find("SELECT count(*) as NUM FROM `tb_user_relation` WHERE active_id={$visit_id} AND passive_id={$res['user_id']}")['NUM']?true:false;
             unset($res['user_info']['password']);
-            $comment_info = $this->pdo->select("SELECT `com`.*, `us`.nickname, `us`.username, `us`.avatar FROM `tb_comment` as `com`, `tb_user` as `us` WHERE `com`.post_id={$id} AND `com`.user_id=`us`.id ORDER BY `com`.time DESC");
+            $sql = "SELECT `com`.*, `us`.nickname, `us`.username, `us`.avatar
+                    FROM `tb_comment` as `com`
+                    JOIN `tb_user` as `us` ON `com`.user_id=`us`.id
+                    WHERE `com`.post_id={$id}
+                    ORDER BY `com`.time DESC";
+            $comment_info = $this->pdo->select($sql);
             foreach ($comment_info as $key=>$val) {
-                $comment_info[$key]['reply_info'] = $this->pdo->select("SELECT `ur`.*, `us1`.nickname, `us1`.username, `us1`.avatar, `us2`.nickname as `passive_nickname`, `us2`.username as `passive_username` FROM `tb_user_reply` as `ur`, `tb_user` as `us1`, `tb_user` as `us2` WHERE `ur`.comment_id={$val['id']} AND `ur`.user_id=`us1`.id AND `ur`.passive_user_id=`us2`.id ORDER BY `ur`.time DESC");
+                $sql = "SELECT `ur`.*, `us1`.nickname, `us1`.username, `us1`.avatar, `us2`.nickname as `passive_nickname`, `us2`.username as `passive_username`
+                        FROM `tb_user_reply` as `ur`
+                        JOIN `tb_user` as `us1` ON `ur`.user_id=`us1`.id
+                        JOIN `tb_user` as `us2` ON `ur`.passive_user_id=`us2`.id
+                        WHERE `ur`.comment_id={$val['id']}
+                        ORDER BY `ur`.time DESC";
+                $comment_info[$key]['reply_info'] = $this->pdo->select($sql);
             }
             $res['comment_info'] = $comment_info;
         } catch (Exception $e) {
@@ -34,6 +50,7 @@ class PostController extends Controller
         return json_encode(array('code'=> 20000, 'data'=> $res));
     }
 
+    // 获取帖子评论信息
     public function fetchCommentInfo ($param) {
         $post_id = $param['post_id'];
         $limit = $param['limit'];
@@ -41,9 +58,21 @@ class PostController extends Controller
         $skip = ($page - 1) * $limit;
         try {
             $total = $this->pdo->count('tb_comment', "post_id={$post_id}");
-            $comment_info = $this->pdo->select("SELECT `com`.*, `us`.nickname, `us`.username, `us`.avatar FROM `tb_comment` as `com`, `tb_user` as `us` WHERE `com`.post_id={$post_id} AND `com`.user_id=`us`.id ORDER BY `com`.time DESC LIMIT {$skip}, {$limit}");
+            $sql = "SELECT `com`.*, `us`.nickname, `us`.username, `us`.avatar
+                    FROM `tb_comment` as `com`
+                    JOIN `tb_user` as `us` ON `com`.user_id=`us`.id
+                    WHERE `com`.post_id={$post_id}
+                    ORDER BY `com`.time DESC
+                    LIMIT {$skip}, {$limit}";
+            $comment_info = $this->pdo->select($sql);
             foreach ($comment_info as $key=>$val) {
-                $comment_info[$key]['reply_info'] = $this->pdo->select("SELECT `ur`.*, `us1`.nickname, `us1`.username, `us1`.avatar, `us2`.nickname as `passive_nickname`, `us2`.username as `passive_username` FROM `tb_user_reply` as `ur`, `tb_user` as `us1`, `tb_user` as `us2` WHERE `ur`.comment_id={$val['id']} AND `ur`.user_id=`us1`.id AND `ur`.passive_user_id=`us2`.id ORDER BY `ur`.time ASC");
+                $sql = "SELECT `ur`.*, `us1`.nickname, `us1`.username, `us1`.avatar, `us2`.nickname as `passive_nickname`, `us2`.username as `passive_username`
+                        FROM `tb_user_reply` as `ur`
+                        JOIN `tb_user` as `us1` ON `ur`.user_id=`us1`.id
+                        JOIN `tb_user` as `us2` ON `ur`.passive_user_id=`us2`.id
+                        WHERE `ur`.comment_id={$val['id']}
+                        ORDER BY `ur`.time ASC";
+                $comment_info[$key]['reply_info'] = $this->pdo->select($sql);
             }
         } catch (Exception $e) {
             return json_encode(array('code'=> 20001, 'message'=> $e->getMessage()));
@@ -52,6 +81,7 @@ class PostController extends Controller
         return json_encode(array('code'=> 20000, 'data'=> array('total'=> $total, 'items'=> $comment_info)));
     }
 
+    // 评论帖子
     public function comment ($param) {
         try {
             $this->pdo->insert('tb_comment', $param, true);
@@ -61,6 +91,7 @@ class PostController extends Controller
         return json_encode(array('code'=> 20000));
     }
 
+    // 回复帖子评论
     public function reply ($param) {
         try {
             $this->pdo->insert('tb_user_reply', $param, true);
@@ -70,6 +101,7 @@ class PostController extends Controller
         return json_encode(array('code'=> 20000));
     }
 
+    // 删除帖子
     public function deletePost ($param) {
         $post_id = $param['post_id'];
         try {

@@ -10,8 +10,13 @@ class SearchController extends Controller
         $start = ($page - 1) * $limit;
         $keywords = $param['keywords'];
         try {
-            $total = $this->pdo->find("SELECT count(*) as NUM FROM `tb_post` as `post` WHERE `post`.title LIKE '%{$keywords}%' AND `post`.status=1")['NUM'];
-            $res = $this->pdo->select("SELECT `post`.*, `user`.nickname, `user`.username, `user`.avatar FROM `tb_post` as `post`, `tb_user` as `user` WHERE `post`.title LIKE '%{$keywords}%' AND `post`.user_id=`user`.id AND `post`.status=1 LIMIT {$start}, {$limit}");
+            $total = $this->pdo->count("tb_post", "title LIKE '%{$keywords}%' AND status=1");
+            $sql = "SELECT `post`.*, `user`.nickname, `user`.username, `user`.avatar
+                    FROM `tb_post` as `post`
+                    JOIN `tb_user` as `user` ON `post`.user_id=`user`.id
+                    WHERE `post`.title LIKE '%{$keywords}%' AND `post`.status=1
+                    LIMIT {$start}, {$limit}";
+            $res = $this->pdo->select($sql);
             foreach ($res as $key=>$val) {
                 // 获取帖子被评论次数
                 $res[$key]['comment_times'] = $this->pdo->count('tb_comment', "post_id={$val['id']}");

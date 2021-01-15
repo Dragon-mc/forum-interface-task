@@ -4,6 +4,7 @@ include './utils/Uploader.php';
 
 class UserController extends Controller
 {
+    // 用户登录
     public function login ($params) {
         // {"code":20000,"data":{"token":"admin-token"}}
         $pwd = md5($params['password']);
@@ -29,6 +30,7 @@ class UserController extends Controller
 
     }
 
+    // 根据token获取用户信息
     public function info ($params) {
         // {"code":20000,"data":{"roles":["admin"],"introduction":"I am a super administrator","avatar":"https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif","name":"Super Admin"}}
         session_start();
@@ -52,6 +54,7 @@ class UserController extends Controller
         return json_encode($returnData);
     }
 
+    // 用户注销
     public function logout ($param) {
         session_start();
         // 释放掉SESSION 中 存储的用户信息
@@ -63,6 +66,7 @@ class UserController extends Controller
         return json_encode($returnData);
     }
 
+    // 获取首页系统的数据
     public function fetchIndexInfo ($param) {
         $res = array('statistics'=> array(), 'system'=> array());
         $res['statistics']['user_num'] = $this->pdo->count('tb_user');
@@ -100,6 +104,7 @@ class UserController extends Controller
         return json_encode($uploadInfo);
     }
 
+    // 用户上传头像成功后，同时更新session中当前登录时保存的头像
     public function setSessionAvatar ($param) {
         $avatar = str_replace('_', '.', $param['avatar']);
         session_start();

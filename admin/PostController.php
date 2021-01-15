@@ -3,6 +3,7 @@ include './core/Controller.php';
 
 class PostController extends Controller
 {
+    // 获取帖子列表
     public function lists ($param) {
         $order = $param['sort'] == '+id' ? 'ASC' : 'DESC';
         $page = $param['page'];
@@ -12,7 +13,12 @@ class PostController extends Controller
         $where .= !!$param['sub_id'] ? " AND post.sub_id={$param['sub_id']}" : '';
         $where .= !!$param['content'] ? " AND post.content LIKE '%{$param['content']}%'" : '';
         $total = $this->pdo->count('tb_post');
-        $sql = "SELECT post.*, user.username as user_name, sub.name as sub_name FROM `tb_post` as `post`, `tb_sub_cate` as `sub`, `tb_user` as `user` WHERE post.user_id=user.id AND post.sub_id=sub.id {$where} AND post.status<2 ORDER BY `id` {$order} LIMIT {$start}, {$limit}";
+        $sql = "SELECT post.*, user.username as user_name, sub.name as sub_name
+                FROM `tb_post` as `post`
+                JOIN `tb_sub_cate` as `sub` ON post.sub_id=sub.id
+                JOIN `tb_user` as `user` ON post.user_id=user.id
+                WHERE post.status<2 {$where}
+                ORDER BY `id` {$order} LIMIT {$start}, {$limit}";
         // 获取语句异常，并返回错误的信息
         try {
             $data = $this->pdo->select($sql);
@@ -29,6 +35,7 @@ class PostController extends Controller
         return json_encode($returnData);
     }
 
+    // 获取次分类列表
     public function subCate () {
         try {
             $mainCate = $this->pdo->select("SELECT `id`, `name` FROM `tb_sub_cate`");
@@ -41,6 +48,7 @@ class PostController extends Controller
         ));
     }
 
+    // 添加帖子
     public function create ($param) {
         try {
             $this->pdo->insert('tb_post', $param);
@@ -51,6 +59,7 @@ class PostController extends Controller
         return json_encode($returnData);
     }
 
+    // 编辑帖子
     public function update ($param) {
         $id = $param['id'];
         try {
@@ -61,6 +70,7 @@ class PostController extends Controller
         return json_encode(array('code'=> 20000));
     }
 
+    // 删除帖子
     public function delete ($param) {
         $post_id = $param['id'];
         try {
@@ -72,6 +82,7 @@ class PostController extends Controller
         return json_encode(array('code'=> 20000));
     }
 
+    // 更新帖子状态
     public function updateStatus ($param) {
         $id = $param['id'];
         try {

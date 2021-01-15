@@ -5,6 +5,7 @@ include './core/Controller.php';
 class UserController extends Controller
 {
     private $token;
+    // 获取验证码，返回验证码图片的base64编码数据
     public function getVerifyCode ($param) {
         $this->token = $param['token'];
         return $this->vcode();
@@ -80,7 +81,7 @@ class UserController extends Controller
     // 检查用户名是否存在
     public function checkUserExist ($param) {
         $username = $param['username'];
-        $res = $this->pdo->select("SELECT count(*) as NUM FROM `tb_user` WHERE binary `username`='{$username}'")[0]['NUM'];
+        $res = $this->pdo->count("tb_user", "WHERE binary `username`='{$username}'");
         if ($res == 0) {
             return json_encode(array('code'=> 20000, 'data'=> false));
         } else {
